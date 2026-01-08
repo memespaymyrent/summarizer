@@ -76,8 +76,18 @@ async function fetchTranscriptViaLib(
       };
     }
 
-    // Combine all text segments
-    const fullText = transcript.map((segment) => segment.text).join(" ");
+    // Combine all text segments, filtering out any undefined/null text
+    const fullText = transcript
+      .map((segment) => segment?.text ?? "")
+      .filter((text) => text.length > 0)
+      .join(" ");
+
+    if (!fullText) {
+      return {
+        success: false,
+        error: "No captions available for this video",
+      };
+    }
 
     return {
       success: true,
@@ -90,6 +100,9 @@ async function fetchTranscriptViaLib(
     // Provide friendlier error messages
     if (message.includes("Video unavailable") || message.includes("private")) {
       return { success: false, error: "Video not found or unavailable" };
+    }
+    if (message.includes("No captions") || message.includes("transcript")) {
+      return { success: false, error: "No captions available for this video" };
     }
 
     return {
