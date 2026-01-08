@@ -6,14 +6,12 @@ interface SidebarProps {
   history: HistoryEntry[];
   onSelect: (entry: HistoryEntry) => void;
   onDelete: (id: string) => void;
-  selectedId?: string;
 }
 
 export default function Sidebar({
   history,
   onSelect,
   onDelete,
-  selectedId,
 }: SidebarProps) {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -49,9 +47,7 @@ export default function Sidebar({
             {history.map((entry) => (
               <li
                 key={entry.id}
-                className={`group relative border-b border-[var(--border)] ${
-                  selectedId === entry.id ? "bg-[var(--card)]" : ""
-                }`}
+                className="group relative border-b border-[var(--border)]"
               >
                 <button
                   onClick={() => onSelect(entry)}

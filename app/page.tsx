@@ -33,7 +33,6 @@ export default function Home() {
   const [summaries, setSummaries] = useState<SummaryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [pendingUrls, setPendingUrls] = useState<string[] | null>(null);
 
   // Load history on mount
   useEffect(() => {
@@ -58,7 +57,6 @@ export default function Home() {
       }
 
       setLoading(true);
-      setPendingUrls(urls);
 
       try {
         const response = await fetch("/api/summarize", {
@@ -130,7 +128,6 @@ export default function Home() {
         ]);
       } finally {
         setLoading(false);
-        setPendingUrls(null);
       }
     },
     [summaries]
