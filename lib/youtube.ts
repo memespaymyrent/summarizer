@@ -1,8 +1,4 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-import path from "path";
-
-const execAsync = promisify(exec);
+import { YtTranscript } from "yt-transcript";
 
 export interface VideoInfo {
   id: string;
@@ -65,27 +61,37 @@ async function fetchVideoTitle(videoId: string): Promise<string> {
   }
 }
 
-// Fetch transcript using Python script
-async function fetchTranscriptViaPython(
+// Fetch transcript using yt-transcript library
+async function fetchTranscriptViaLib(
   videoId: string
 ): Promise<{ success: boolean; transcript?: string; error?: string }> {
-  const scriptPath = path.join(process.cwd(), "scripts", "get_transcript.py");
-
   try {
-    const { stdout, stderr } = await execAsync(
-      `python3 "${scriptPath}" "${videoId}"`,
-      { timeout: 30000 }
-    );
+    const ytTranscript = new YtTranscript({ videoId });
+    const transcript = await ytTranscript.getTranscript();
 
-    if (stderr && !stderr.includes("Warning")) {
-      console.error("Python script stderr:", stderr);
+    if (!transcript || transcript.length === 0) {
+      return {
+        success: false,
+        error: "No captions available for this video",
+      };
     }
 
-    const result = JSON.parse(stdout.trim());
-    return result;
+    // Combine all text segments
+    const fullText = transcript.map((segment) => segment.text).join(" ");
+
+    return {
+      success: true,
+      transcript: fullText,
+    };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch transcript";
+
+    // Provide friendlier error messages
+    if (message.includes("Video unavailable") || message.includes("private")) {
+      return { success: false, error: "Video not found or unavailable" };
+    }
+
     return {
       success: false,
       error: message,
@@ -108,7 +114,7 @@ export async function fetchTranscript(url: string): Promise<TranscriptResult> {
     // Fetch title and transcript in parallel
     const [title, transcriptResult] = await Promise.all([
       fetchVideoTitle(videoId),
-      fetchTranscriptViaPython(videoId),
+      fetchTranscriptViaLib(videoId),
     ]);
 
     if (!transcriptResult.success) {
